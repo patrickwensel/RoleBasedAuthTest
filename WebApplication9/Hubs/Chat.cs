@@ -5,7 +5,9 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebApplication9.Interface;
 using WebApplication9.Models;
+using WebApplication9.ViewModel;
 
 namespace WebApplication9.Hubs
 {
@@ -13,10 +15,12 @@ namespace WebApplication9.Hubs
     {
         public static ConcurrentDictionary<string, string> dicUserInformation = new ConcurrentDictionary<string, string>();
         private readonly UserManager<ApplicationUser> _userManager;
-        public Chat(
-           UserManager<ApplicationUser> userManager)
+        private IMessage _iMessage;
+        public Chat(UserManager<ApplicationUser> userManager,
+           IMessage iMessage)
         {
             _userManager = userManager;
+            _iMessage = iMessage;
         }
 
         public async Task<string> SendIndividualMessage(string fromUser, string toUser, string message)
@@ -28,23 +32,33 @@ namespace WebApplication9.Hubs
 
                 //var MsgUniqueID = DateTime.UtcNow.Month + DateTime.UtcNow.Second + (DateTime.UtcNow.Year + 4) + DateTime.UtcNow.Millisecond + DateTime.UtcNow.Hour + DateTime.UtcNow.Day + DateTime.UtcNow.Minute + DateTime.UtcNow.Millisecond;
 
+                Message objMessageModel = new Message()
+                {
+                    ToUserID = toUser,
+                    MessageText = message,
+                };
+
                 var toUserData = await _userManager.FindByIdAsync(toUser);
-                await Clients.Caller.SendAsync("broadcastIndividualMessage", $"To ({toUserData.Email}) : {message}");
                 if (dicUserInformation.ContainsKey(toUser))
                 {
+                    await Clients.Caller.SendAsync("broadcastIndividualMessage", $"To ({toUserData.Email}) : {message}");
                     string uId = GetUserId();
                     var userEmail = "";
                     if (!string.IsNullOrEmpty(uId))
                     {
+                        objMessageModel.FromUserID = uId;
                         var fromUserData = await _userManager.FindByIdAsync(uId);
                         userEmail = fromUserData.Email;
                     }
                     await Clients.Client(dicUserInformation[toUser]).SendAsync("broadcastIndividualMessage", $"From ({userEmail}) : {message}");
+                    #region insert message in table 
+                    var MessageID = await _iMessage.InsertMessage(objMessageModel);
+                    #endregion
+                }
+                else {
+                    await Clients.Caller.SendAsync("offlineUserMessage", $"{toUserData.Email} is currently Offline.");
                 }
 
-                #region insert individual message in table 
-                // Put insert databse record code here
-                #endregion
                 return "SUCCESS";
             }
             catch (Exception ex)
@@ -94,6 +108,7 @@ namespace WebApplication9.Hubs
             {
                 Notify(uId, Context.ConnectionId);
             }
+
             //await Clients.All.SendAsync("UserConnected", Context.ConnectionId);
             await base.OnConnectedAsync();
         }
@@ -119,7 +134,7 @@ namespace WebApplication9.Hubs
             }
             catch (Exception ex)
             {
-                throw;
+                //throw;
             }
         }
 

@@ -25,8 +25,6 @@ connection.onclose(start);
 // Start the connection.
 start();
 
-
-
 connection.on("broadcastIndividualMessage", (message) => {
     console.log("broadcastIndividualMessage");
     console.log(message);
@@ -36,6 +34,9 @@ connection.on("broadcastIndividualMessage", (message) => {
     document.getElementById("ulmessages").appendChild(li);
 });
 
+connection.on("offlineUserMessage", (message) => {
+    alert(message);
+});
 
 connection.on("UserConnected", function (connectionId) {
     //var groupElement = document.getElementById("group");
@@ -58,6 +59,14 @@ document.getElementById("sendBtn").addEventListener("click", async function (eve
     var ddlUserListElement = document.getElementById("ddlUserList");
     var userId = ddlUserListElement.options[ddlUserListElement.selectedIndex].value;
     var message = document.getElementById("txtmessage").value;
+    if (message === "") {
+        alert("Please enter a valid message");
+        return;
+    }
+    if (userId === "") {
+        alert("Please select an User");
+        return;
+    }
     console.error(userId);
     console.error(message);
     try {

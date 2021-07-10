@@ -9,7 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using WebApplication9.Data;
 using WebApplication9.Hubs;
+using WebApplication9.Interface;
 using WebApplication9.Models;
+using WebApplication9.Repository;
 
 namespace WebApplication9
 {
@@ -39,9 +41,17 @@ namespace WebApplication9
                 .AddApiAuthorization<ApplicationUser, ApplicationDbContext>();
 
             services.AddScoped<IClaimsTransformation, AddRolesClaimsTransformation>();
+            services.AddScoped<IMessage, MessageRepository>();
 
             services.AddAuthentication()
                 .AddIdentityServerJwt();
+
+            services.AddCors(options => options.AddPolicy("CorsPolicy",
+             builder =>
+                {
+                    builder.AllowAnyMethod().AllowAnyHeader().AllowCredentials();
+                }));
+
 
             services.AddControllersWithViews();
             services.AddRazorPages();
@@ -55,7 +65,7 @@ namespace WebApplication9
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext db)
         {
             if (env.IsDevelopment())
             {
@@ -69,13 +79,15 @@ namespace WebApplication9
                 app.UseHsts();
             }
 
+            //db.Database.EnsureCreated();
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             if (!env.IsDevelopment())
             {
                 app.UseSpaStaticFiles();
             }
-
+            app.UseCors("CorsPolicy");
             app.UseRouting();
 
             app.UseAuthentication();
