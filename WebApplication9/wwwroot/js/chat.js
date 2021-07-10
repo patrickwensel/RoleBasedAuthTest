@@ -1,38 +1,73 @@
 ﻿"use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/Chat").configureLogging(signalR.LogLevel.Information).build();
-//var connection = new signalR.HubConnectionBuilder()
-//    .withUrl("/Chat", {
-//        accessTokenFactory: () => this.accessTokenFactory
-//    })
-//    .build();
+var connection = new signalR.HubConnectionBuilder()
+    .withUrl("/Chat?userId=" + btoa((document.getElementById("userID")).value))
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
 
 //Disable send button until connection is established  
 document.getElementById("sendBtn").disabled = true;
 
-connection.on("ReceiveMessage", function (user, message) {
+async function start() {
+    try {
+        await connection.start();
+        console.log("SignalR Connected."); 
+        document.getElementById("sendBtn").disabled = false;
+    } catch (err) {
+        console.log(err);
+        setTimeout(start, 5000);
+    }
+};
+
+connection.onclose(start);
+
+// Start the connection.
+start();
+
+
+
+connection.on("broadcastIndividualMessage", (message) => {
+    console.log("broadcastIndividualMessage");
+    console.log(message);
     var msg = message.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
-    var encodedMsg = user + " says " + msg;
     var li = document.createElement("li");
-    li.textContent = encodedMsg;
+    li.textContent = msg;
     document.getElementById("ulmessages").appendChild(li);
 });
 
-connection.start().then(function () {
-    document.getElementById("sendBtn").disabled = false;
-}).catch(function (err) {
-    return console.error(err.toString());
+
+connection.on("UserConnected", function (connectionId) {
+    //var groupElement = document.getElementById("group");
+    //var option = document.createElement("option");
+    //option.text = connectionId;
+    //option.value = connectionId;
+    //groupElement.add(option);
 });
 
-document.getElementById("sendBtn").addEventListener("click", function (event) {
-    var user = (document.getElementById("txtUserName")).value;
+connection.on("UserDisconnected", function (connectionId) {
     //var groupElement = document.getElementById("group");
-    //var groupValue = groupElement.options[groupElement.selectedIndex].value;
+    //for (var i = 0; i < groupElement.length; i++) {
+    //    if (groupElement.options[i].value == connectionId) {
+    //        groupElement.remove(i);
+    //    }
+    //}
+});
+
+document.getElementById("sendBtn").addEventListener("click", async function (event) {
+    var ddlUserListElement = document.getElementById("ddlUserList");
+    var userId = ddlUserListElement.options[ddlUserListElement.selectedIndex].value;
     var message = document.getElementById("txtmessage").value;
-    console.error(user);
+    console.error(userId);
     console.error(message);
-    connection.invoke("SendPrivateMessage","421949b7-9bcb-4e9d-b0ae-0a0f2c5fd0ff",  message).catch(function (err) {
-        return console.error(err.toString());
-    });
+    try {
+        await connection.invoke("SendIndividualMessage", "test", userId, message).then(function (result) {
+            console.log("invocation completed successfully: " + (result === null ? '(null)' : result));
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+    } catch (err) {
+        console.error(err);
+    }
     event.preventDefault();
 });

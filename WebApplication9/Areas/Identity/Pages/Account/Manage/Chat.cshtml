@@ -1,10 +1,20 @@
 ﻿
 @page
+@model ChatModel
 
 <div class="container">
     <div class="row">
         <div class="col-2">User Name</div>
-        <div class="col-4"><input type="text" id="txtUserName" /></div>
+        <div class="col-4">
+            <select id="ddlUserList" style="width:300px">
+                @foreach (var item in Model.UserList)
+                {
+                    <option value="@item.Id">
+                        @item.Email
+                    </option>
+                }
+            </select>
+        </div>
     </div>
     <div class="row">
         <div class="col-2">Message</div>
@@ -16,6 +26,7 @@
             <input type="button" id="sendBtn" value="Send" />
         </div>
     </div>
+    <input type="hidden" id="userID" asp-for="UserID" />
 </div>
 <div class="row">
     <div class="col-12">

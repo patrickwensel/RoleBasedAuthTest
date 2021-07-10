@@ -1,17 +1,12 @@
-using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
 using WebApplication9.Data;
 using WebApplication9.Hubs;
 using WebApplication9.Models;
@@ -45,35 +40,13 @@ namespace WebApplication9
 
             services.AddScoped<IClaimsTransformation, AddRolesClaimsTransformation>();
 
-            //services.AddCors(o => o.AddPolicy("CorsPolicy", builder =>
-            //{
-            //    builder
-            //        .AllowAnyOrigin()
-            //        .AllowAnyMethod()
-            //        .AllowAnyHeader()
-            //        .AllowCredentials()
-            //        .WithOrigins("https://localhost:5001");
-            //}));
-
             services.AddAuthentication()
                 .AddIdentityServerJwt();
-                //.AddJwtBearer(options => {
-                //    options.Events = new JwtBearerEvents
-                //    {
-                //        OnMessageReceived = context =>
-                //        {
-                //            var accessToken = context.Request.Query["access_token"];
-                //            if (string.IsNullOrEmpty(accessToken) == false)
-                //            {
-                //                context.Token = accessToken;
-                //            }
-                //            return Task.CompletedTask;
-                //        }
-                //    };
-                //}); 
+
             services.AddControllersWithViews();
             services.AddRazorPages();
             services.AddSignalR();
+
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
@@ -113,15 +86,12 @@ namespace WebApplication9
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
-                endpoints.MapRazorPages();
                 endpoints.MapHub<Chat>("/chat");
+                endpoints.MapRazorPages();
             });
 
             app.UseSpa(spa =>
             {
-                // To learn more about options for serving an Angular SPA from ASP.NET Core,
-                // see https://go.microsoft.com/fwlink/?linkid=864501
-
                 spa.Options.SourcePath = "ClientApp";
 
                 if (env.IsDevelopment())
