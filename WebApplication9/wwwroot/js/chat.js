@@ -12,7 +12,7 @@ document.getElementById("sendBtn").disabled = true;
 async function start() {
     try {
         await connection.start();
-        console.log("SignalR Connected."); 
+        console.log("SignalR Connected.");
         document.getElementById("sendBtn").disabled = false;
     } catch (err) {
         console.log(err);
@@ -30,8 +30,8 @@ connection.on("broadcastIndividualMessage", (message) => {
     console.log(message);
     var msg = message.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
     var li = document.createElement("li");
-    li.textContent = msg;
-    document.getElementById("ulmessages").appendChild(li);
+    li.innerHTML = msg;
+    document.getElementById("ulmessages").prepend(li);
 });
 
 connection.on("offlineUserMessage", (message) => {
@@ -43,7 +43,7 @@ connection.on("UserConnected", function (connectionId) {
     //var option = document.createElement("option");
     //option.text = connectionId;
     //option.value = connectionId;
-    //groupElement.add(option);
+    //groupElement.add(option);   
 });
 
 connection.on("UserDisconnected", function (connectionId) {

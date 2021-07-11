@@ -12,6 +12,8 @@ namespace WebApplication9.Data
         [Required]
         public Guid MessageID { get; set; }
         [Required]
+        public string UserID { get; set; }
+        [Required]
         public string FromUserID { get; set; }
         [Required]
         public string ToUserID { get; set; }

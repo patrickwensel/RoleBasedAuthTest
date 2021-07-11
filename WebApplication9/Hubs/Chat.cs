@@ -15,9 +15,8 @@ namespace WebApplication9.Hubs
     {
         public static ConcurrentDictionary<string, string> dicUserInformation = new ConcurrentDictionary<string, string>();
         private readonly UserManager<ApplicationUser> _userManager;
-        private IMessage _iMessage;
-        public Chat(UserManager<ApplicationUser> userManager,
-           IMessage iMessage)
+        private readonly IMessage _iMessage;
+        public Chat(UserManager<ApplicationUser> userManager, IMessage iMessage)
         {
             _userManager = userManager;
             _iMessage = iMessage;
@@ -37,32 +36,37 @@ namespace WebApplication9.Hubs
                     ToUserID = toUser,
                     MessageText = message,
                 };
-
+                string uId = GetUserId();
+                if (!string.IsNullOrEmpty(uId))
+                {
+                    objMessageModel.UserID = uId;
+                    objMessageModel.FromUserID = uId;
+                }
                 var toUserData = await _userManager.FindByIdAsync(toUser);
+                await Clients.Caller.SendAsync("broadcastIndividualMessage", $"me To {toUserData.Email} : <b> {message} </b>");
                 if (dicUserInformation.ContainsKey(toUser))
                 {
-                    await Clients.Caller.SendAsync("broadcastIndividualMessage", $"To ({toUserData.Email}) : {message}");
-                    string uId = GetUserId();
                     var userEmail = "";
                     if (!string.IsNullOrEmpty(uId))
                     {
-                        objMessageModel.FromUserID = uId;
                         var fromUserData = await _userManager.FindByIdAsync(uId);
                         userEmail = fromUserData.Email;
                     }
-                    await Clients.Client(dicUserInformation[toUser]).SendAsync("broadcastIndividualMessage", $"From ({userEmail}) : {message}");
-                    #region insert message in table 
-                    var MessageID = await _iMessage.InsertMessage(objMessageModel);
-                    #endregion
+                    await Clients.Client(dicUserInformation[toUser]).SendAsync("broadcastIndividualMessage", $"{userEmail} To me : <b> {message} </b>");
                 }
-                else {
-                    await Clients.Caller.SendAsync("offlineUserMessage", $"{toUserData.Email} is currently Offline.");
+                else
+                {
+                    //await Clients.Caller.SendAsync("offlineUserMessage", $"{toUserData.Email} is currently Offline.");
                 }
+                #region insert message in table 
+                var MessageID = await _iMessage.InsertMessage(objMessageModel);
+                #endregion
 
                 return "SUCCESS";
             }
             catch (Exception ex)
             {
+                _ = string.Format("Error \n Error : {0} ", ex.ToString());
                 return "CatchError";
             }
         }
@@ -78,15 +82,15 @@ namespace WebApplication9.Hubs
                 }
                 else
                 {
-                    string value;
                     var Result = dicUserInformation.FirstOrDefault(x => (x.Key == UserID) && x.Value == ConnectionID);
                     if (string.IsNullOrEmpty(Result.Key))
                     {
                         if (dicUserInformation.ContainsKey(UserID))
                         {
-                            dicUserInformation.TryRemove(UserID, out value);
+                            dicUserInformation.TryRemove(UserID, out string value);
                         }
                         dicUserInformation.TryAdd(UserID, ConnectionID);
+                        //var messages = await _iMessage.GetMessagesById(Guid.Parse(UserID));
                         await Clients.All.SendAsync("UserConnected", ConnectionID);
                     }
                     else
@@ -127,13 +131,13 @@ namespace WebApplication9.Hubs
         {
             try
             {
-                string value;
                 var Result = dicUserInformation.FirstOrDefault(x => x.Value == ConnectionID);
-                dicUserInformation.TryRemove(Result.Key, out value);
+                dicUserInformation.TryRemove(Result.Key, out string value);
                 await Clients.All.SendAsync("UserDisconnected", ConnectionID);
             }
             catch (Exception ex)
             {
+                _ = string.Format("Error \n Error : {0} ", ex.ToString());
                 //throw;
             }
         }
@@ -154,6 +158,7 @@ namespace WebApplication9.Hubs
             }
             catch (Exception ex)
             {
+                _ = string.Format("Error \n Error : {0} ", ex.ToString());
                 return strData;
             }
         }
@@ -173,6 +178,7 @@ namespace WebApplication9.Hubs
             }
             catch (Exception ex)
             {
+                _ = string.Format("Error \n Error : {0} ", ex.ToString());
                 return strData;
             }
         }

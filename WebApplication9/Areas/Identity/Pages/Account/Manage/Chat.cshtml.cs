@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -5,37 +6,36 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using WebApplication9.Interface;
 using WebApplication9.Models;
+using WebApplication9.ViewModel;
 
 namespace WebApplication9.Areas.Identity.Pages.Account.Manage
 {
     public class ChatModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ILogger<ChangePasswordModel> _logger;
+        private readonly IMessage _iMessage;
 
         public ChatModel(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
-            ILogger<ChangePasswordModel> logger)
+            IMessage iMessage)
         {
             _userManager = userManager;
-            _signInManager = signInManager;
-            _logger = logger;
+            _iMessage = iMessage;
         }
 
         public string UserID { get; set; }
         public IList<ApplicationUser> UserList { get; set; }
+        public IList<Message> Messages { get; set; }
 
         private async Task LoadAsync(ApplicationUser user)
         {
             var userID = await _userManager.GetUserIdAsync(user);
             UserID = userID;
-            //UserList = (IList<ApplicationUser>)_userManager.Users.ToListAsync();
 
-            var roles = await _userManager.GetRolesAsync(user);
-            UserList = (_userManager.Users).ToList();
+            UserList = _userManager.Users.Where(x => x.Id != userID).ToList();
+            Messages = await _iMessage.GetMessagesByUserId(userID);
         }
         public async Task<IActionResult> OnGetAsync()
         {

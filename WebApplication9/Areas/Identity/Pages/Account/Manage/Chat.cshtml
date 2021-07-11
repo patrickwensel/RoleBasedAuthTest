@@ -5,7 +5,7 @@
 <div class="container">
     <div class="row">
         <div class="col-2">User Name</div>
-        <div class="col-4">
+        <div class="col-6">
             <select id="ddlUserList" style="width:300px">
                 @foreach (var item in Model.UserList)
                 {
@@ -16,11 +16,12 @@
             </select>
         </div>
     </div>
+    <br />
     <div class="row">
         <div class="col-2">Message</div>
-        <div class="col-4"><input type="text" id="txtmessage" /></div>
+        <div class="col-6"><input type="text" id="txtmessage" /></div>
     </div>
-    <div class="row"> </div>
+    <br />
     <div class="row">
         <div class="col-6">
             <input type="button" id="sendBtn" value="Send" />
@@ -34,8 +35,24 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-6">
-        <ul id="ulmessages"></ul>
+    <div class="col-12">
+        <ul id="ulmessages">
+            @foreach (var item in Model.Messages)
+            {
+                var preMessage = "";
+                <li>
+                    @if (item.FromUserID == Model.UserID)
+                    {
+                        preMessage = "me To " + item.ToUserEmail + " :";
+                    }
+                    else
+                    {
+                        preMessage = item.FromUserEmail + " To me :";
+                    }
+                    @preMessage <b> @item.MessageText </b>
+                </li>
+            }
+        </ul>
     </div>
 </div>
 <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
